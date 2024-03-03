@@ -2,6 +2,7 @@
 Created on 2024-02-29
 Created by Tiangeng Lu
 HAPPY LEAP DAY 2024!
+Data Source: https://www.opm.gov/data/datasets/
 """
 import pandas as pd
 # main table
@@ -156,7 +157,7 @@ agy_fam_freq = df_stem[['SALARY','OCC', 'AGYSUB']]\
                          values = 'SALARY',
                          aggfunc = 'count',
                          fill_value = 0, margins = True).reset_index()
-
+# median salary by agency by stem job family
 agy_med_sal = df_stem[['SALARY','OCC', 'AGYSUB']]\
     .merge(occ[['OCC', 'OCCT','OCCFAM','OCCFAMT']], on = 'OCC')\
         .merge(agy[['AGYSUB', 'AGYSUBT']], on = 'AGYSUB')\
@@ -165,7 +166,7 @@ agy_med_sal = df_stem[['SALARY','OCC', 'AGYSUB']]\
                          values = 'SALARY',
                          aggfunc = 'median',
                          fill_value = 0).reset_index()            
-
+# output excel file
 with pd.ExcelWriter('opm_summary.xlsx') as writer:
     df_stem_describe.to_excel(writer, sheet_name = 'stem_desc')
     stem_occ_freq.to_excel(writer, sheet_name = 'occ_freq', index = False, freeze_panes = (1, 0))
