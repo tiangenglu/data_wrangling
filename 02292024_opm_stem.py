@@ -116,3 +116,63 @@ toa = pd.read_csv('/Users/tiangeng/Public/data/opm_202309/DTtoa.txt',
                       })
 # end of data import
 
+# summary statistics, do not merge tables yet.
+# adding variable label info by merging tables
+
+# stem vs non-stem
+def stem(x):
+    if x == 'XXXX' or x == '****':
+        return '0'
+    else: return '1'
+
+df['stem_flag'] = df.apply(lambda row: stem(row['STEMOCC']), axis = 1)
+df_stem_describe = round(df[['SALARY']].groupby(df['stem_flag']).describe(),2)
+
+# stem occupation frequency
+stem_occ_freq = df_stem[['OCC']].value_counts().to_frame().reset_index().merge(occ[['OCC', 'OCCT','OCCFAM','OCCFAMT']], on = 'OCC')
+
+# stem occupation frequency by broader job families
+stem_fam_freq = stem_occ_freq.groupby(['OCCFAM', 'OCCFAMT'])[['count']].sum().reset_index()
+
+# stem salary by occupation
+stem_occ_sal = round(df_stem.groupby(['OCC'])['SALARY']\
+                     .agg(['count','median', 'mean', 'std','max','min', 'sum']), 2).reset_index()\
+    .merge(occ[['OCC', 'OCCT','OCCFAM','OCCFAMT']], on = 'OCC')\
+        .sort_values(['sum','median','mean','std'], ascending = False)\
+            .reset_index(drop = True)[['OCC', 'OCCT','OCCFAM','OCCFAMT', 'count','median', 'mean','max','min', 'std', 'sum']]
+# stem salary by job family
+stem_fam_sal = df_stem.merge(occ[['OCC', 'OCCT','OCCFAM','OCCFAMT']], on = 'OCC')\
+    .groupby(['OCCFAM','OCCFAMT'])['SALARY']\
+        .agg(['count','median', 'mean', 'std','max','min', 'sum'])\
+            .reset_index()
+
+# job family by agency
+
+agy_fam_freq = df_stem[['SALARY','OCC', 'AGYSUB']]\
+    .merge(occ[['OCC', 'OCCT','OCCFAM','OCCFAMT']], on = 'OCC')\
+        .merge(agy[['AGYSUB', 'AGYSUBT']], on = 'AGYSUB')\
+            .pivot_table(index = ['AGYSUBT'],
+                         columns = ['OCCFAM'],
+                         values = 'SALARY',
+                         aggfunc = 'count',
+                         fill_value = 0, margins = True).reset_index()
+
+agy_med_sal = df_stem[['SALARY','OCC', 'AGYSUB']]\
+    .merge(occ[['OCC', 'OCCT','OCCFAM','OCCFAMT']], on = 'OCC')\
+        .merge(agy[['AGYSUB', 'AGYSUBT']], on = 'AGYSUB')\
+            .pivot_table(index = ['AGYSUBT'],
+                         columns = ['OCCFAM'],
+                         values = 'SALARY',
+                         aggfunc = 'median',
+                         fill_value = 0).reset_index()            
+
+with pd.ExcelWriter('opm_summary.xlsx') as writer:
+    df_stem_describe.to_excel(writer, sheet_name = 'stem_desc')
+    stem_occ_freq.to_excel(writer, sheet_name = 'occ_freq', index = False, freeze_panes = (1, 0))
+    stem_fam_freq.to_excel(writer, sheet_name = 'occ_jobfam', index = False)
+    stem_occ_sal.to_excel(writer, sheet_name = 'occ_sal', index = False)
+    stem_fam_sal.to_excel(writer, sheet_name = 'jobfam_sal', index = False)
+    agy_fam_freq.to_excel(writer, sheet_name = 'jobfam_agy', index = False)
+    agy_med_sal.to_excel(writer, sheet_name = 'agy_med_sal', index = False)
+
+
