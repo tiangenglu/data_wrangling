@@ -79,7 +79,8 @@ corresponding to the {xlsx_col_seq[table_width - 1]} column.')
 # Get the desired column position for the total hours for each staff.
 # How many columns does each staff member occupy?
 col_nums = [xlsx_col_seq.index('E') + df3.shape[1] * num for num in range(staff_num)]
-print(f'The zero-indexed column number for calculated total hours are: {col_nums}')
+print(f'''The zero-indexed column number for calculated total hours 
+      are: {col_nums}''') # triple quotes for multi-line strings
 # prepare the total mini-table
 col_letters = []
 for i in col_nums:
@@ -103,7 +104,7 @@ for i in range(len(df_list_format)):
     sheet_title_list[i] = f'PAY PERIOD {i+1}: {pp_begin.iloc[i].date()} to {pp_end.iloc[i].date()}'
 
 ##### FINAL OUTPUT #####
-with pd.ExcelWriter('formatted_excel.xlsx') as writer:
+with pd.ExcelWriter('formatt_excel_py.xlsx') as writer:
     # set the `.book` method of writer(output excel file)
     workbook = writer.book # to add_format later
     for i in range(len(df_list_format)):
@@ -138,3 +139,5 @@ with pd.ExcelWriter('formatted_excel.xlsx') as writer:
                                       startrow=17, 
                                       startcol=col_nums[j],
                                       header = None)
+
+del(df1, df2, df3, df4, df_list, df_list_format, df_total_list, df_blank, df_blank_row)
