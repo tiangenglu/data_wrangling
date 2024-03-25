@@ -117,14 +117,7 @@ def p90(x):
 # In[15]:
 
 
-df_gs.groupby(['stem'])['salary'].agg(['mean','std',
-                                       p10, p25,'median', p75, p90]).round()
-
-
-# In[16]:
-
-
-np.nanpercentile(df_gs['salary'], [10, 25, 50, 75, 90])
+np.nanpercentile(df_gs['los'], [10, 25, 50, 75, 90])
 
 
 # In[17]:
@@ -159,8 +152,8 @@ plt.show()
 
 # In[21]:
 
-
+# upload a dataframe in the environment to s3
 s3.put_object(Body = gs1530.to_csv(index = False), Bucket = my_bucket, Key = 'gs1530.csv')
 
-# upload local file
+# upload a local file
 s3.upload_file('median_salary_occ.csv', my_bucket, 'med_salary_occ.csv')
