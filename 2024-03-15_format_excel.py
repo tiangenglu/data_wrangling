@@ -3,7 +3,7 @@
 """
 Created on Fri Mar 15 01:46:36 2024
 
-multi_sheet_sormatted_excel
+multi_sheet_formatted_excel
 
 @author: Tiangeng Lu
 """
@@ -104,7 +104,7 @@ for i in range(len(df_list_format)):
     sheet_title_list[i] = f'PAY PERIOD {i+1}: {pp_begin.iloc[i].date()} to {pp_end.iloc[i].date()}'
 
 ##### FINAL OUTPUT #####
-with pd.ExcelWriter('formatt_excel_py.xlsx') as writer:
+with pd.ExcelWriter('format_excel_py.xlsx') as writer:
     # set the `.book` method of writer(output excel file)
     workbook = writer.book # to add_format later
     for i in range(len(df_list_format)):
