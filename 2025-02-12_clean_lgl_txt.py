@@ -50,7 +50,7 @@ l_start_array = np.array(l_start)
 loop_end_locations = np.where(l_start_array == all_precincts[-1])[0]
 print(f'This is the output without indexing[0]: {np.where(l_start_array == all_precincts[-1])}')
 print(f'This is the (correct) output when indexing[0] from np.where: {loop_end_locations}')
-# tbd
+# to be continued
 
 
 
