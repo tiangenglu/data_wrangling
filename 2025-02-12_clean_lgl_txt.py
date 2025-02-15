@@ -8,7 +8,7 @@ Created on Wed Feb 12 23:24:25 2025
 
 #import os
 import numpy as np
-#import pandas as pd
+import pandas as pd
 # read in uncleaned .txt detail data of York County election results
 line_by_line = []
 with open("detail.txt", "r") as file:
@@ -50,7 +50,23 @@ l_start_array = np.array(l_start)
 loop_end_locations = np.where(l_start_array == all_precincts[-1])[0]
 print(f'This is the output without indexing[0]: {np.where(l_start_array == all_precincts[-1])}')
 print(f'This is the (correct) output when indexing[0] from np.where: {loop_end_locations}')
-# to be continued
+
+# summary
+summary_raw = pd.DataFrame(line_by_line[:loop_end_locations[0]][1:])
+
+# concatenated column names, needs work
+colnames_raw = line_by_line[:loop_end_locations[0]][0]
+print(f'raw column names:\n {colnames_raw}')
+colnames_raw_list= colnames_raw.split('  ')
+print(f'raw column names split by two spaces:\n {colnames_raw_list}')
+print([len(col) for col in colnames_raw_list])
+# get the finalized snake_case column names, strip(' ') to remove leading spaces and retain the non-empty and non-line-break characters
+colnames_list=[col.strip(' ').replace(' ','_').lower() for col in colnames_raw_list if len(col) > 2 and not col.endswith('\n')]
+print(f'After a few string manipulation steps, get the final column names: \n{colnames_list}')
+# next steps:
+# because the data contains several election results, try to single out the 2024 presidential election results
+# in line_by_line, each "line" are the results of a specific precinct of a specific election
+
 
 
 
