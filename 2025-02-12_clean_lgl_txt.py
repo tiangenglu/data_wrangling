@@ -84,19 +84,7 @@ print(summary_results.head())
 print(summary_results.tail())
 print('Print the dataframe info:')
 print(summary_results.info())
-"""
-<class 'pandas.core.frame.DataFrame'>
-RangeIndex: 161 entries, 0 to 160
-Data columns (total 4 columns):
- #   Column             Non-Null Count  Dtype 
----  ------             --------------  ----- 
- 0   precinct           161 non-null    object
- 1   registered_voters  161 non-null    object
- 2   ballots_cast       161 non-null    object
- 3   voter_turnout      161 non-null    object
-dtypes: object(4)
-memory usage: 5.2+ KB
-"""
+
 
 data_type_summary_results = dict(zip(colnames_list,['str','int','int','float']))
 print(data_type_summary_results)
@@ -106,11 +94,35 @@ print('After changing the data type of each column, the new data info shows:')
 print(summary_results.info())
 # output the summary table
 summary_results.to_csv('PA_York_2024_election_summary.csv', index = False)
-# next steps:
+# print out summary statistics
+total_registered_votes = summary_results['registered_voters'].sum()
+print(f'Total Registered Voters: {total_registered_votes}')
+total_ballots_casted = summary_results['ballots_cast'].sum()
+print(f'Total Ballots Casted: {total_ballots_casted}')
+total_turnout = total_ballots_casted / total_registered_votes
+print(f'Total voter turnout: {100 * total_turnout.round(6)}%')
+# Get the locations of the beginning of each loop "Carroll"
+loop_start_locations=np.where(l_start_array == all_precincts[0])[0]
+print(f'The following locations are where a new table starts: {loop_start_locations}')
+
+
+# write-ins
+all_candidates=[name.strip() for name in line_by_line[loop_start_locations[1]-2].split('   ') 
+                if len(name) > 2 and not name.endswith('\n')]
+print(all_candidates)
+print(len(all_candidates)) # total candidates, translating to number of columns for each table  
+# dictionary comprehension        
+all_candidates_distinct_check = {name:all_candidates.count(name) for name in all_candidates} # count element frequency, all should be 1      
+print(all_candidates_distinct_check)
+
 # because the data contains several election results, try to single out the 2024 presidential election results
+line_by_line[loop_start_locations[1] - 1].split('    ')
 # in line_by_line, each "line" are the results of a specific precinct of a specific election
-
-
+vote_methods_raw=line_by_line[loop_start_locations[1] - 1].split('    ')
+vote_methods=[vote.strip() for vote in vote_methods_raw if len(vote) > 1]
+vote_methods = [v for v in vote_methods if len(v)>1] # remove '\n'
+# count frequency for voting methods/types, it's a good way to check the following numbers with the number of all candidates
+print({type:vote_methods.count(type) for type in vote_methods})
 
 
 
