@@ -121,10 +121,44 @@ line_by_line[loop_start_locations[1] - 1].split('    ')
 vote_methods_raw=line_by_line[loop_start_locations[1] - 1].split('    ')
 vote_methods=[vote.strip() for vote in vote_methods_raw if len(vote) > 1]
 vote_methods = [v for v in vote_methods if len(v)>1] # remove '\n'
+print(vote_methods[-5:]) # check last several "columns", is there a final total column?
 # count frequency for voting methods/types, it's a good way to check the following numbers with the number of all candidates
 print({type:vote_methods.count(type) for type in vote_methods})
-
-
+line_by_line[loop_start_locations[1:3]]
+# 2025-02-16
+president_table_raw = line_by_line[loop_start_locations[1]:loop_end_locations[1] + 1]
+len(president_table_raw)
+# split the concatenated string by extra spaces, make them easier to convert to a dataframe
+president_table_clean = [None] * len(president_table_raw)
+for i in range(len(president_table_raw)):
+    president_table_clean[i] = [town.strip() for town in president_table_raw[i].split('   ') if len(town)>0]
+    president_table_clean[i] = [town for town in president_table_clean[i] if len(town)>0]
+# check the length of each element(row) in the presidential election results table
+check_length_list=[len(row) for row in president_table_clean]
+# dictionary comprehension
+print({l:check_length_list.count(l) for l in check_length_list}) # should be the same length for every element so they can convert to a dataframe
+president_df_colnames = ['precinct','registered_voters','d_election_day','d_mail_in','d_provisional','d_total',
+                   'r_election_day','r_mail_in','r_provisional','r_total']
+# narrow down to R and D parties
+president_df = pd.DataFrame(president_table_clean).iloc[:,:10]
+president_df.columns = president_df_colnames
+# add totals for libertarian and green party
+president_df['l_total']=pd.Series([precinct[13] for precinct in president_table_clean],dtype = 'int') # Chase Oliver
+president_df['g_total']=pd.Series([precinct[17] for precinct in president_table_clean],dtype = 'int') # Jill Stein
+# get a new list(series) from a specific element of all sub-lists in a nested list
+president_df['write_in_total']=pd.Series([precinct[21] for precinct in president_table_clean],dtype = 'int')
+president_df['total_casted']=pd.Series([precinct[-1] for precinct in president_table_clean])
+# before conducting descriptive stastistics, check the data types
+# edit data types of all columns
+dtype_president = dict(zip(president_df.columns, ['str'] + ['int'] * 14))
+print(dtype_president)
+president_df = president_df.astype(dtype_president)
+print(president_df.info())
+# add summary % columns for R and D totals
+president_df['r_pct_casted'] = president_df['r_total'] / president_df['total_casted']
+president_df['d_pct_casted'] = president_df['d_total'] / president_df['total_casted']
+#president_df['turnout'] = president_df['total_casted'] / president_df['registered_voters'] # resultant numbers don't match the summary turnout
+president_df.to_csv('PA_York_2024_election_president.csv',index = False)
 
 
 
