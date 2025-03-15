@@ -1,0 +1,35 @@
+---
+title: "data_wrangling"
+author: "Tiangeng Lu"
+date: "2025-03-15"
+output: html_document
+---
+
+```{r warning=FALSE, message = FALSE}
+library(dplyr)
+library(readxl)
+```
+
+```{r, include=FALSE}
+table_path = "/Users/tiangeng/Documents/python_files/apportionment-2020-table01.xlsx"
+```
+
+# Data Wrangling
+
+## `rename()` and `filter()`
+
+```{r}
+state_pop <- read_excel(path = table_path,
+                        sheet = 1,
+                        skip = 3,
+                        n_max = 51)
+state_pop <- state_pop |>
+  rename(state = 1, 
+         pop = 2, 
+         apportionment = 3, 
+         change = 4)
+total_pop <- tail(state_pop, n = 1) # last row as total
+state_pop <- state_pop |>
+  filter(row_number() <= n() - 1) # exclude the last row for state population data frame
+```
+
