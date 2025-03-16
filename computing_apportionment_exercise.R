@@ -4,7 +4,7 @@
 # Source: https://www2.census.gov/programs-surveys/decennial/2020/data/apportionment/2020PriorityValues.xlsx
 library(readxl)
 library(dplyr)
-table_path = "/Users/tiangeng/Documents/python_files/apportionment-2020-table01.xlsx"
+table_path = "redacted"
 state_pop <- read_excel(path = table_path,
                         sheet = 1,
                         skip = 3,
