@@ -25,7 +25,7 @@ pop <- state_pop$pop
 names(pop) <- state_pop$state
 options(scipen = 999)
 options(digits=20)
-n <- seq(2, 70, by = 1)
+n <- seq(2, 60, by = 1)
 state_priority_value_l <- vector(mode = "list", length = dim(state_pop)[1])
 
 # priority value
@@ -40,3 +40,12 @@ df_state_priority <- data.frame(state = names(state_priority_values),
                                 priority_value = unlist(state_priority_value_l),
                                 row.names = NULL) |>
   arrange(desc(priority_value))
+
+# parse number, adding 1 to include the guaranteed 1 seat of each state
+df_state_priority$seat <- readr::parse_number(df_state_priority$state) + 1
+# remove 0-9 from state
+df_state_priority$state <- gsub(pattern = "[0-9]+",replacement = "", df_state_priority$state)
+# only keep a reasonable number to include the assignment of the available 385 seats, with a few extra rows
+df_state_priority <- df_state_priority |>
+  filter(row_number() <= 395) |>
+  mutate(house = row_number() + 50) # add house seat enumeration
