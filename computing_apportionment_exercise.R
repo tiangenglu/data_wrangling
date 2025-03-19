@@ -49,3 +49,15 @@ df_state_priority$state <- gsub(pattern = "[0-9]+",replacement = "", df_state_pr
 df_state_priority <- df_state_priority |>
   filter(row_number() <= 395) |>
   mutate(house = row_number() + 50) # add house seat enumeration
+
+results <- df_state_priority |>
+  filter(row_number() <= 385) |>
+  # retain row with max seat by state, equals to the total assigned seat to a seat
+  group_by(state) |>
+  slice(which.max(seat)) |>
+  # retain state and seat columns
+  select(c(state,seat)) |>
+  # add states with only one seat (didn't get additional seats via priority values)
+  bind_rows(data.frame(state = setdiff(state_pop$state,df_state_priority$state), 
+                       seat = 1)) |>
+  arrange(state)
