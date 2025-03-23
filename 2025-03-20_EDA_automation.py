@@ -23,3 +23,5 @@ recent_data = my_data.set_index('time').loc['2025-01-31']
 var_1 = str('visa')
 visa_totals=my_data.groupby(var_1)['count'].sum() # create a series
 group_count=int(visa_totals.describe().iloc[0]) # .iloc[] to avoid warning message
+visa_totals.idxmax() # index of the max value
+visa_totals.max() # max of series
