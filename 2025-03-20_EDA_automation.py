@@ -17,14 +17,37 @@ import pandas as pd
 from docx import Document
 from docx.shared import Inches
 import time as tm
+import datetime as dt # dt.date
+from datetime import datetime # different from above
 import sys
 print(sys.version)
-my_data = pd.read_csv('iv_alltime.csv')
-print(my_data.columns)
+# create a handy function to print out last modified time of a file in an easy-to-read time format
+def dtime(file):
+    return datetime.fromtimestamp(os.path.getmtime(file)).strftime("%Y-%m-%d, %A, %H:%M:%S")
+# done w/ packages and functions, data work begins
+file_path = 'iv_alltime.csv'
+my_data = pd.read_csv(file_path)
+print(f'Data last modified time: {dtime(file_path)}')
+my_data['time']=pd.to_datetime(my_data['time']).dt.date
+# make sure the 'time' column has been converted to datetime format
+collection_start_month = my_data['time'].min().strftime("%B, %Y") # 'March, 2017'
+collection_cutoff_month = my_data['time'].max().strftime("%B, %Y")
+print(my_data.info())
+# visa descriptions, also scraped, see https://github.com/tiangenglu/WebScrape/blob/main/06222023_visa_descriptions.py
 labels = pd.read_csv('visa_directory.csv')
 labels_dict = labels.set_index('SYMBOL')['CLASS'].to_dict()
-my_data.time.unique()
-recent_data = my_data.set_index('time').loc['2025-01-31']
+# subset the most recent monthly data
+recent_data = my_data.loc[my_data['time'] == my_data['time'].max()].reset_index(drop = True)
+recent_total=recent_data['count'].sum()
+# How many months does the dataframe cover?
+num_months_covered = len(my_data['time'].unique())
+# Series of monthly totals
+monthly_totals = my_data.groupby('time')['count'].sum()
+max_month = monthly_totals.idxmax().strftime("%B, %Y") # month w/ highest visa issuance
+min_month = monthly_totals.idxmin().strftime("%B, %Y") # month w/ lowest visa issuance
+# summary statistics, convert to integer
+monthly_summary = monthly_totals.describe().astype('int') # mean 1, sd 2, min 3, median 5, max 7
+
 # specify the (first) variable of interest
 var_1 = str('visa')
 var_2 = str('nationality')
@@ -43,7 +66,34 @@ if my_data['count'].sum() == country_totals.sum():
 else:
     print("Grand total doesn't match the sum of all nationalities. Check for errors.")
     
-group_count=int(visa_totals.describe().iloc[0]) # .iloc[] to avoid warning message
+total_visa_types=int(visa_totals.describe().iloc[0]) # .iloc[] to avoid warning message
+
+# overview
+overview = f"""\
+DISCLAIMER:\n
+This summary is based on web-scraped data. It does not represent the official statistics. \
+This program is part of an automated workflow from web-scraping raw data to a structured statistical report. \n
+Overview:\n
+Data were last scraped and cleaned at {dtime(file_path)}. \
+The current data table covers between {collection_start_month} and {collection_cutoff_month}. \
+The data has issuance records of {total_visa_types} unique immigrant visa classes.
+"""
+
+# highlights
+if monthly_totals.iloc[-1] > monthly_summary.iloc[5]: # compared median
+    latest_pattern = "is higher than"
+elif monthly_totals.iloc[-1] == monthly_summary.iloc[5]:
+    latest_pattern = "equals to"
+else: latest_pattern = "is lower than"
+
+latest_diff_median = abs(monthly_totals.iloc[-1] - monthly_summary.iloc[5])
+
+highlights = f"""\
+In {collection_cutoff_month}, {monthly_totals.iloc[-1]:,} immigrant visas were issued. \
+This number {latest_pattern} the median by {latest_diff_median:,}.
+"""
+
+
 # max and min
 visa_totals.idxmax() # index of the max value
 visa_totals.max() # max of series
@@ -67,14 +117,12 @@ max_min = f"""\
 In terms of nationalities, {country_totals.idxmax().title()} has been the top recipient of immigrant visas.
 """
 
-# monthly average
-
-
-
 # start putting things in the output file
 with open('monthly_visa_summary.txt', 'w') as file:
-    print(max_min)
+    file.write("Summary of Monthly Immigrant Visa Issuance\n")
     file.write(tm.strftime("%Y-%m-%d, %A\n\n"))
+    file.write(overview)
+    file.write(highlights)
     file.write(max_min)
     file.write("\nGenerated in Python")
     file.close()
