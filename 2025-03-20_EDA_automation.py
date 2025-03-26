@@ -7,15 +7,20 @@ Created on Thu Mar 20 22:03:58 2025
 
 Expected Output
 
-Data: [data]
+Title
 Date: [date]
-
-Basic: Subject matter (variable) of interest. Distribution patterns, including count frequency, mean, range, and outliers.
+[optional disclaimer]
+Overview:
+    Subject matter (variable) of interest. Data source.
+Summary Statistics: 
+    Distribution patterns, including count frequency, mean, range. Notable max and min values.
+Outliers:
+    Operational definition of outliers. Print out outliers.
 """
 import os
 import pandas as pd
-from docx import Document
-from docx.shared import Inches
+#from docx import Document
+#from docx.shared import Inches
 import time as tm
 import datetime as dt # dt.date
 from datetime import datetime # different from above
@@ -30,8 +35,8 @@ my_data = pd.read_csv(file_path)
 print(f'Data last modified time: {dtime(file_path)}')
 my_data['time']=pd.to_datetime(my_data['time']).dt.date
 # make sure the 'time' column has been converted to datetime format
-collection_start_month = my_data['time'].min().strftime("%B, %Y") # 'March, 2017'
-collection_cutoff_month = my_data['time'].max().strftime("%B, %Y")
+collection_start_month = my_data['time'].min().strftime("%B %Y") # 'March, 2017'
+collection_cutoff_month = my_data['time'].max().strftime("%B %Y")
 print(my_data.info())
 # visa descriptions, also scraped, see https://github.com/tiangenglu/WebScrape/blob/main/06222023_visa_descriptions.py
 labels = pd.read_csv('visa_directory.csv')
@@ -93,7 +98,6 @@ In {collection_cutoff_month}, {monthly_totals.iloc[-1]:,} immigrant visas were i
 This number {latest_pattern} the median by {latest_diff_median:,}.
 """
 
-
 # max and min
 visa_totals.idxmax() # index of the max value
 visa_totals.max() # max of series
@@ -110,11 +114,53 @@ else:
 
 country_totals.idxmax().title()
 country_totals.max()
+top5_nationalities=country_totals.sort_values(ascending = False).iloc[:5]
 
 max_min = f"""\
 {visa_totals.idxmax()}, known as "{labels_dict[visa_totals.idxmax()]}", has the highest number of issuance at {visa_totals.max():,}. \
 {visa_totals.idxmin()}, known as "{labels_min}", has the lowest number of issuance at only {visa_totals.min():,}.
-In terms of nationalities, {country_totals.idxmax().title()} has been the top recipient of immigrant visas.
+Grouping by nationalities, {country_totals.idxmax().title()} has been the top recipient of immigrant visas since {collection_start_month}.
+Below are the top {len(top5_nationalities)} recipient nationalities:
+{top5_nationalities.map('{:,}'.format)}
+   
+"""
+
+# outliers, outside 2sd
+up_2sd = monthly_summary.iloc[1] + monthly_summary.iloc[2] * 2
+low_2sd = monthly_summary.iloc[1] - monthly_summary.iloc[2] * 2
+
+outlier_high = monthly_totals.loc[monthly_totals > up_2sd]
+print(len(outlier_high))
+outlier_high.index=[t.strftime("%B %Y") for t in outlier_high.index]
+
+outlier_low = monthly_totals.loc[monthly_totals < low_2sd]
+print(len(outlier_low))
+outlier_low.index=[t.strftime("%B %Y") for t in outlier_low.index]
+
+
+if len(outlier_high)>0:
+    high = outlier_high.map('{:,}'.format)
+    print(high)
+else:
+    high = "NA"
+    print(high) 
+    
+if len(outlier_low)>0:
+    low = outlier_low.map('{:,}'.format)
+    print(low)
+else:
+    low = "NA"
+    print(low)    
+
+outlier = f"""Outliers:
+Outliers were identified using the 2 standard deviation rule. \
+Data points beyond the 2 standard deviation range are reported as potential outliers. \
+There are {len(outlier_high)} high outlier(s) and {len(outlier_low)} low outliers. Numbers are reported below:\n
+High:
+{high}
+
+Low:
+{low}
 """
 
 # start putting things in the output file
@@ -124,6 +170,7 @@ with open('monthly_visa_summary.txt', 'w') as file:
     file.write(overview)
     file.write(highlights)
     file.write(max_min)
+    file.write(outlier)
     file.write("\nGenerated in Python")
     file.close()
 
